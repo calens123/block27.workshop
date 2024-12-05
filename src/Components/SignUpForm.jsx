@@ -1,41 +1,56 @@
 import { useState } from "react";
 
-export default function SignUpForm() {
-  // State variables for form inputs and error handling
+export default function SignUpForm({ setToken }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [usernameError, setUsernameError] = useState(""); // Error state for username
 
-  // Submit handler
+  // Validate username length
+  const validateUsername = (username) => {
+    if (username.length < 8) {
+      setUsernameError("Username must be at least 8 characters long.");
+      return false;
+    }
+    setUsernameError(""); // Reset error if valid
+    return true;
+  };
+
   async function handleSubmit(event) {
-    event.preventDefault(); // Prevent page refresh
+    event.preventDefault();
+
+    if (!validateUsername(username)) {
+      return; // Don't submit if validation fails
+    }
+
     try {
       const response = await fetch(
         "https://fsa-jwt-practice.herokuapp.com/signup",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }), // Send state values in request body
+          body: JSON.stringify({ username, password }),
         }
       );
-      const result = await response.json(); // Parse the response
-      console.log(result); // Log the result to observe the shape of the data
 
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.message); // Handle API errors
+        throw new Error(result.message);
       }
 
-      alert(`Sign-up successful! Token: ${result.token}`); // Temporary success feedback
+      setToken(result.token);
+      alert(`Sign-up successful! Token: ${result.token}`);
     } catch (error) {
-      setError(error.message); // Set error message in state
+      setError(error.message);
     }
   }
+
   return (
     <>
       <h2>Sign Up</h2>
-      {/* Conditionally render error message */}
       {error && <p style={{ color: "red" }}>{error}</p>}
-
+      {usernameError && <p style={{ color: "red" }}>{usernameError}</p>}{" "}
+      {/* Show username error */}
       <form onSubmit={handleSubmit}>
         <label>
           Username:
